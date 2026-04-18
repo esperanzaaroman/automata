@@ -34,4 +34,54 @@ defmodule AutomataTest do
     assert Enum.member?(trans, {[0, 2], :b, [0, 3]})
     assert Enum.member?(trans, {[0, 3], :b, [0]})
   end
+
+  def afn_con_epsilon do
+    %{
+      estados: [0, 1, 2, 3],
+      alfabeto: [:a],
+      inicial: 0,
+      finales: [3],
+      transiciones: [
+        {0, :epsilon, [1]},
+        {1, :epsilon, [2]},
+        {2, :a, [3]}
+      ]
+    }
+  end
+
+  test "e_closure de un estado sin transiciones epsilon retorna solo ese estado" do
+    afn = afn_con_epsilon()
+    assert Automata.e_closure(afn, [3]) == [3]
+  end
+
+  test "e_closure sigue una transicion epsilon" do
+    afn = afn_con_epsilon()
+    assert Automata.e_closure(afn, [1]) == [1, 2]
+  end
+
+  test "e_closure sigue transiciones epsilon transitivamente" do
+    afn = afn_con_epsilon()
+    assert Automata.e_closure(afn, [0]) == [0, 1, 2]
+  end
+
+  test "e_closure de conjunto ya incluye los estados originales" do
+    afn = afn_con_epsilon()
+    assert Automata.e_closure(afn, [2, 3]) == [2, 3]
+  end
+
+  test "e_closure no entra en loop con ciclos epsilon" do
+    afn_ciclico = %{
+      estados: [0, 1, 2, 3],
+      alfabeto: [:a],
+      inicial: 0,
+      finales: [3],
+      transiciones: [
+        {0, :epsilon, [1]},
+        {1, :epsilon, [2]},
+        {2, :epsilon, [0]},
+        {2, :epsilon, [3]}
+      ]
+    }
+    assert Automata.e_closure(afn_ciclico, [0]) == [0, 1, 2, 3]
+  end
 end
