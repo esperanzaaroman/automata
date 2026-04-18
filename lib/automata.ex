@@ -63,6 +63,79 @@ defmodule Automata do
     buscar_epsilon(cola ++ nuevos, visitados ++ nuevos, trans)
   end
 
+  def afn_e do
+    %{
+      estados: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      alfabeto: [:a, :b],
+      inicial: 0,
+      finales: [10],
+      transiciones: [
+        {0, :epsilon, [1]},
+        {1, :epsilon, [2, 3]},
+        {2, :a, [4]},
+        {3, :b, [5]},
+        {4, :epsilon, [6]},
+        {5, :epsilon, [6]},
+        {6, :epsilon, [7]},
+        {7, :a, [8]},
+        {8, :b, [9]},
+        {9, :b, [10]}
+      ]
+    }
+  end
+
+  def e_determinizar(afn) do
+    inicial_dfa = e_closure(afn, [afn.inicial])
+
+    {estados, transiciones} = explorar_e([inicial_dfa], [], [], afn)
+
+    finales =
+      Enum.filter(estados, fn s ->
+        Enum.any?(s, &(&1 in afn.finales))
+      end)
+
+    %{
+      estados: estados,
+      alfabeto: afn.alfabeto,
+      inicial: inicial_dfa,
+      finales: finales,
+      transiciones: transiciones
+    }
+  end
+
+  defp explorar_e([], visitados, transiciones, _afn), do: {visitados, transiciones}
+
+  defp explorar_e([actual | pila], visitados, transiciones, afn) do
+    if actual in visitados do
+      explorar_e(pila, visitados, transiciones, afn)
+    else
+      nuevas_trans =
+        Enum.reduce(afn.alfabeto, [], fn simbolo, acc ->
+          movidos = mover(afn.transiciones, actual, simbolo)
+          destino = e_closure(afn, movidos)
+
+          if destino == [] do
+            acc
+          else
+            [{actual, simbolo, destino} | acc]
+          end
+        end)
+
+      nuevos =
+        nuevas_trans
+        |> Enum.map(fn {_, _, d} -> d end)
+        |> Enum.uniq()
+        |> Enum.reject(&(&1 in [actual | visitados]))
+
+      explorar_e(
+        nuevos ++ pila,
+        [actual | visitados],
+        transiciones ++ nuevas_trans,
+        afn
+      )
+    end
+  end
+
   defp explorar([], visitados, transiciones, _trans_afn, _alfabeto) do
     {visitados, transiciones}
   end

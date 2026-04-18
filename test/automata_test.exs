@@ -84,4 +84,31 @@ defmodule AutomataTest do
     }
     assert Automata.e_closure(afn_ciclico, [0]) == [0, 1, 2, 3]
   end
+
+  test "e_determinizar produce el estado inicial como e_closure del inicial" do
+    afd = Automata.e_determinizar(Automata.afn_e())
+    assert afd.inicial == [0, 1, 2, 3]
+  end
+
+  test "e_determinizar produce la cantidad correcta de estados alcanzables" do
+    afd = Automata.e_determinizar(Automata.afn_e())
+    assert length(afd.estados) == 6
+  end
+
+  test "e_determinizar produce exactamente un estado final" do
+    afd = Automata.e_determinizar(Automata.afn_e())
+    assert length(afd.finales) == 1
+    assert hd(afd.finales) == [10]
+  end
+
+  test "e_determinizar transiciones clave del afd resultante" do
+    afd = Automata.e_determinizar(Automata.afn_e())
+    trans = afd.transiciones
+    assert Enum.member?(trans, {[0, 1, 2, 3], :a, [4, 6, 7]})
+    assert Enum.member?(trans, {[0, 1, 2, 3], :b, [5, 6, 7]})
+    assert Enum.member?(trans, {[4, 6, 7], :a, [8]})
+    assert Enum.member?(trans, {[5, 6, 7], :a, [8]})
+    assert Enum.member?(trans, {[8], :b, [9]})
+    assert Enum.member?(trans, {[9], :b, [10]})
+  end
 end
