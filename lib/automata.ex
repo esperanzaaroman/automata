@@ -47,6 +47,22 @@ defmodule Automata do
     }
   end
 
+  def e_closure(automaton, estados) do
+    buscar_epsilon(estados, estados, automaton.transiciones)
+  end
+
+  defp buscar_epsilon([], visitados, _trans), do: Enum.sort(visitados)
+
+  defp buscar_epsilon([actual | cola], visitados, trans) do
+    nuevos =
+      trans
+      |> Enum.filter(fn {e, s, _} -> e == actual and s == :epsilon end)
+      |> Enum.flat_map(fn {_, _, destinos} -> destinos end)
+      |> Enum.reject(&(&1 in visitados))
+
+    buscar_epsilon(cola ++ nuevos, visitados ++ nuevos, trans)
+  end
+
   defp explorar([], visitados, transiciones, _trans_afn, _alfabeto) do
     {visitados, transiciones}
   end
